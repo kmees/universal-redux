@@ -2,7 +2,7 @@ import { map } from 'lodash';
 import createLogger from 'redux-logger';
 
 // TODO: parameterize react-router
-import { syncHistory } from 'react-router-redux';
+import { syncHistoryWithStore } from 'react-router-redux';
 import { browserHistory } from 'react-router';
 import createMemoryHistory from 'react-router/lib/createMemoryHistory';
 
@@ -23,14 +23,8 @@ function hmr(store) {
 
 export default function create(providedMiddleware, data) {
   // TODO: parameterize react-router
-  let router;
-  if (__CLIENT__) {
-    router = syncHistory(browserHistory);
-  } else {
-    router = syncHistory(createMemoryHistory());
-  }
-
-  const defaultMiddleware = [ router ];
+  const history = __CLIENT__ ? browserHistory : createMemoryHistory()
+  const defaultMiddleware = [ ];
 
   // backward compatibility to 2.x api expecting object for middleware instead of array:
   const customMiddleware = !providedMiddleware.concat ? map(providedMiddleware, (m) => { return m; }) : providedMiddleware;
@@ -45,6 +39,8 @@ export default function create(providedMiddleware, data) {
   const finalCreateStore = useDevtools ? composeDevtools(middleware)(createStore) : applyMiddleware(...middleware)(createStore);
 
   const store = finalCreateStore(reducers, data);
+
+  syncHistoryWithStore(history, store)
 
   linkDevtoolsToRouter(router, store);
 
